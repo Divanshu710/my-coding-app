@@ -8,7 +8,6 @@ export default function ProtectedRoute({ children }) {
     // Not logged in, redirect to /auth
     return <Navigate to="/"/>;
   }
-
   
   // Logged in, render children
   return children;

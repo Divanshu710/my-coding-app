@@ -23,6 +23,7 @@ export async function createSubmission(source_code, language_id, stdin) {
       },
       { headers }
     );
+
     return res.data.token;
   } catch (error) {
     console.error("Error creating submission:", error);

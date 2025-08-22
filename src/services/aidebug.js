@@ -1,71 +1,54 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-
+// This function will be used for debugging feedback.
 export async function getAIDebugFeedback(problemTitle, code) {
-  const OPENROUTER_API_KEY =import.meta.env.VITE_OPENROUTER_API_KEY ; 
-  console.log(OPENROUTER_API_KEY);
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct", 
-        messages: [
-          {
-            role: "system",
-            content: "You're a helpful code debugging assistant. Just give the hint what is wrong. And if now wrong just tell if it can be more optimised or not",
-          },
-          {
-            role: "user",
-            content: `Problem Title:\n${problemTitle}\n\nUser Code:\n${code}`,
-          },
-        ],
-      }),
-    });
-
-    const data = await response.json();
-    const message = data.choices?.[0]?.message?.content;
-    return message || "No helpful response.";
-  } catch (error) {
-    console.error("AI Debug Error:", error.message);
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  console.log(GEMINI_API_KEY)
+  if (!GEMINI_API_KEY) {
+    console.error("Gemini API Key not found.");
     return "Failed to contact AI Debug API.";
+  }
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  // CORRECTED LINE: Updated the model name for better compatibility.
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+
+  try {
+    const prompt = `You're a helpful code debugging assistant. Just give a hint about what is wrong. If there is nothing wrong, just tell the user if it can be more optimized or not.\n\nProblem Title:\n${problemTitle}\n\nUser Code:\n${code}`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    return text || "No helpful response.";
+  } catch (error) {
+    console.error("AI Debug Error:", error);
+    return "Failed to contact AI Debug API down.";
   }
 }
 
-// src/services/aiDebug.js
-
+// This function will be used for getting time and space complexity.
 export async function getTimeSpaceComplexity(problemTitle, code) {
-  const OPENROUTER_API_KEY =import.meta.env.VITE_OPENROUTER_API_KEY ; // 🔐 You may want to move this to .env for production
+  const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!GEMINI_API_KEY) {
+    console.error("Gemini API Key not found.");
+    return "Failed to contact AI Debug API.";
+  }
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  // CORRECTED LINE: Updated the model name for better compatibility.
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct", // or meta-llama/llama-3-8b-instruct
-        messages: [
-          {
-            role: "system",
-            content: "You're a helpful code debugging assistant. Give me Time Complexity and Space Complexity in one word in Big O notation without explanation",
-          },
-          {
-            role: "user",
-            content: `Problem Title:\n${problemTitle}\n\nUser Code:\n${code}`,
-          },
-        ],
-      }),
-    });
+    const prompt = `You're a helpful code complexity assistant. Give me the Time Complexity and Space Complexity in a single line, separated by a comma. Use Big O notation without any explanation or extra words. For example: O(n), O(1).\n\nProblem Title:\n${problemTitle}\n\nUser Code:\n${code}`;
 
-    const data = await response.json();
-    const message = data.choices?.[0]?.message?.content;
-    return message || "No helpful response.";
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    return text || "No helpful response.";
   } catch (error) {
     console.error("AI Debug Error:", error);
-    return "Failed to contact AI Debug API.";
+    return "Failed to contact AI Debug API down.";
   }
 }
